@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import warnings
-from sanic_session.base import BaseSessionInterface
+from .base import BaseSessionInterface
 
 try:
     from sanic_motor import BaseModel

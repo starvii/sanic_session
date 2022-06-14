@@ -1,6 +1,6 @@
 import warnings
 
-from sanic_session.base import BaseSessionInterface
+from .base import BaseSessionInterface
 
 try:
     import aiomcache

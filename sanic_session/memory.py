@@ -1,5 +1,5 @@
-from sanic_session.base import BaseSessionInterface
-from sanic_session.utils import ExpiringDict
+from .base import BaseSessionInterface
+from .utils import ExpiringDict
 
 
 class InMemorySessionInterface(BaseSessionInterface):

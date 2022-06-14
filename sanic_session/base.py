@@ -1,9 +1,13 @@
-import time
-import datetime
 import abc
-import ujson
+import datetime
+import os
+import string
+import time
 import uuid
-from sanic_session.utils import CallbackDict
+from typing import Callable
+
+import ujson
+from .utils import CallbackDict
 
 
 def get_request_container(request):
@@ -21,11 +25,28 @@ class SessionDict(CallbackDict):
         self.modified = False
 
 
+def default_sid_provider() -> str:
+    """ default_sid_provider
+    use uuid.uuid4 to generate an session id
+    """
+    return uuid.uuid4().hex
+
+
+def mock_php_sid_provider() -> str:
+    """mock_php_sid_provider
+    mock a php session id (with cookie_name: PHPSESSID)
+    """
+    tables = string.digits + string.ascii_lowercase
+    seed = os.urandom(26)
+    return ''.join([tables[x % len(tables)] for x in seed])
+
+
 class BaseSessionInterface(metaclass=abc.ABCMeta):
     # this flag show does this Interface need request/response middleware hooks
 
     def __init__(
-        self, expiry, prefix, cookie_name, domain, httponly, sessioncookie, samesite, session_name, secure,
+            self, expiry, prefix, cookie_name, domain, httponly, sessioncookie, samesite, session_name, secure,
+            sid_provider: Callable[[None], str] = default_sid_provider
     ):
         self.expiry = expiry
         self.prefix = prefix
@@ -36,6 +57,7 @@ class BaseSessionInterface(metaclass=abc.ABCMeta):
         self.samesite = samesite
         self.session_name = session_name
         self.secure = secure
+        self.sid_provider: Callable[[None], str] = sid_provider
 
     def _delete_cookie(self, request, response):
         req = get_request_container(request)
@@ -111,7 +133,7 @@ class BaseSessionInterface(metaclass=abc.ABCMeta):
         sid = request.cookies.get(self.cookie_name)
 
         if not sid:
-            sid = uuid.uuid4().hex
+            sid = self.sid_provider()
             session_dict = SessionDict(sid=sid)
         else:
             val = await self._get_value(self.prefix, sid)
